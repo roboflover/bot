@@ -36,7 +36,7 @@ export class BotService {
         case /^mode_/i: // Когда выбирают режим полёта (например, 'mode_Режим_1')
           await this.bookTraining(query); // Переходим к подтверждению записи
           break;
-        case 'book_training':
+        case 'book_training': 
           await this.confirmBooking(query); // Подтверждаем запись
           break;
         default:
