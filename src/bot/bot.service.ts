@@ -3,7 +3,8 @@ import * as TelegramBot from 'node-telegram-bot-api';
 
 @Injectable()
 export class BotService {
-  private token = process.env.TELEGRAM_BOT_TOKEN || '';
+  // private token = process.env.TELEGRAM_BOT_TOKEN || '';
+  private token = "8023215234:AAFkF9YReVrH1FQa0dlrEnBXn2SAdnJ6YSg";
   public bot: TelegramBot;
 
   constructor() {
