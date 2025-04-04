@@ -27,14 +27,17 @@ export class BotService {
       const { data, message } = query;
 
       switch (data) {
-        case 'select_slot':
-          await this.selectTrainingSlot(query);
+        case 'select_slot': // Когда нажимают "Выбрать слот тренировки"
+          await this.selectTrainingSlot(query); // Переходим к выбору слота
           break;
-        case 'select_mode':
-          await this.selectFlightMode(query);
+        case /^slot_/i: // Когда выбирают конкретный слот (например, 'slot_09:00')
+          await this.selectFlightMode(query); // Переходим к выбору режима полёта
+          break;
+        case /^mode_/i: // Когда выбирают режим полёта (например, 'mode_Режим_1')
+          await this.bookTraining(query); // Переходим к подтверждению записи
           break;
         case 'book_training':
-          await this.bookTraining(query);
+          await this.confirmBooking(query); // Подтверждаем запись
           break;
         default:
           console.log(`Unknown callback data: ${data}`);
@@ -61,7 +64,7 @@ export class BotService {
     const chatId = message.chat.id;
     const slotKeyboard = trainingSlots.map(slot => ({
       text: slot,
-      callback_data: `slot_${slot}`
+      callback_data: `slot_${slot}` // Сохраняем выбранный слот
     }));
     const options = {
       reply_markup: JSON.stringify({
@@ -81,7 +84,7 @@ export class BotService {
     const chatId = message.chat.id;
     const modeKeyboard = flightModes.map(mode => ({
       text: mode,
-      callback_data: `mode_${mode.replace(/\s/g, '_')}`
+      callback_data: `mode_${mode.replace(/\s/g, '_')}` // Сохраняем выбранный режим
     }));
     const options = {
       reply_markup: JSON.stringify({
@@ -112,6 +115,16 @@ export class BotService {
       chat_id: chatId,
       message_id: message.message_id,
       ...options
+    });
+  }
+
+  // Подтверждение записи
+  async confirmBooking(query: TelegramBot.CallbackQuery) {
+    const { message } = query;
+    const chatId = message.chat.id;
+    await this.bot.editMessageText('Запись на тренировку подтверждена!', {
+      chat_id: chatId,
+      message_id: message.message_id
     });
   }
 }
