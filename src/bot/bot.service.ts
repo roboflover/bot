@@ -5,7 +5,7 @@ import * as path from 'path'; // Для работы с путями
 import { join } from 'path';
 import { cwd } from 'process';
 
-const trainingSlots = ['12.04 Сб 20:00-21:00', '12.04 Суб 21:00-22.00'];
+const trainingSlots = ['12.04 Сб 20:00-22:00', '19.04 Суб 21:00-22.00', '26.04 Сб 20:00-22:00', '03.05 Суб 20:00-22.00'];
 const flightModes = ['R/L-1', 'R/L-2', 'R/L-3', 'R/L-4'];
 
 // Объект для хранения состояния пользователя
