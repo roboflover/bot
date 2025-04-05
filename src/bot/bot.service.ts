@@ -166,10 +166,10 @@ private csvFilePath = join(cwd(), 'test_results.csv');
     const { message } = query;
     const chatId = message.chat.id;
 
-    const slotKeyboard = trainingSlots.map(slot => ([{
+    const slotKeyboard = trainingSlots.map(slot => ({
       text: slot,
       callback_data: `slot_${slot}` // Сохраняем выбранный слот
-    }]));
+    }));
 
     const options = { reply_markup: JSON.stringify({ inline_keyboard: [slotKeyboard] }) };
     await this.bot.editMessageText('Выберите слот тренировки:', {
