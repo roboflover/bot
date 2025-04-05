@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common'
 import * as TelegramBot from 'node-telegram-bot-api';
 import * as fs from 'fs'; // Модуль для работы с файловой системой
 import * as path from 'path'; // Для работы с путями
 import { join } from 'path';
 import { cwd } from 'process';
 
-const trainingSlots = ['09:00', '12:00', '15:00', '18:00'];
-const flightModes = ['Режим 1', 'Режим 2', 'Режим 3', 'Режим 4'];
+const trainingSlots = ['12.04 Суббота 20:00-21:00', '12.04 Суббота 21:00-22.00'];
+const flightModes = ['Канал R/L-1', 'Канал R/L-2', 'Канал R/L-3', 'Канал R/L-4'];
 
 // Объект для хранения состояния пользователя
 interface UserState {
@@ -222,19 +222,25 @@ private async askForUsername(chatId: number, userState: UserState) {
   private async bookTraining(query: TelegramBot.CallbackQuery, selectedSlot: string, selectedUsername: string, selectedMode: string) {
     const { message } = query;
     const chatId = message.chat.id;
-
+  
     // Получаем объект состояния пользователя
     const userState = this.userStates[chatId];
-
+  
     if (!userState) {
       await this.bot.sendMessage(chatId, 'Ошибка! Сначала выберите слот.');
       console.error(`Ошибка подтверждения записи: слот не выбран`);
       return;
     }
-
+  
+    // Проверяем, доступен ли слот
+    if (!this.checkSlotAvailability(selectedSlot)) {
+      await this.bot.sendMessage(chatId, `К сожалению, слот "${selectedSlot}" уже заполнен. Попробуйте выбрать другой.`);
+      return;
+    }
+  
     // Сохраняем данные в CSV
     this.saveToCsv(chatId, selectedUsername, selectedSlot, selectedMode);
-
+  
     await this.bot.editMessageText(
       `Вы выбрали режим ${selectedMode}. Ваша запись подтверждена!`,
       { chat_id: chatId, message_id: message.message_id }
@@ -318,6 +324,23 @@ private async askForUsername(chatId: number, userState: UserState) {
     // Отправка сообщения пользователю
     await this.bot.sendMessage(chatId, messageText, { parse_mode: 'Markdown' });
     console.log(`Отправлено сообщение с информацией о записавшихся участниках: ID=${chatId}`);
+  }
+
+  private checkSlotAvailability(slot: string): boolean {
+    // Чтение всех записей из CSV-файла
+    const allRecords = fs.readFileSync(this.csvFilePath, { encoding: 'utf8' }).split('\n').slice(1); // Пропускаем первую строку (заголовки)
+  
+    // Подсчитываем количество участников для выбранного слота
+    let participantsCount = 0;
+    for (const record of allRecords) {
+      const parts = record.split(',');
+      if (parts.length >= 5 && parts[4] === slot) {
+        participantsCount++;
+      }
+    }
+  
+    // Возвращаем true, если слот доступен (менее 4 участников), иначе false
+    return participantsCount < 4;
   }
 
   
