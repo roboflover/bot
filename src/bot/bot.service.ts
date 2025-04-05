@@ -5,8 +5,8 @@ import * as path from 'path'; // Для работы с путями
 import { join } from 'path';
 import { cwd } from 'process';
 
-const trainingSlots = ['12.04 Суббота 20:00-21:00', '12.04 Суббота 21:00-22.00'];
-const flightModes = ['Канал R/L-1', 'Канал R/L-2', 'Канал R/L-3', 'Канал R/L-4'];
+const trainingSlots = ['12.04 Сб 20:00-21:00', '12.04 Суб 21:00-22.00'];
+const flightModes = ['R/L-1', 'R/L-2', 'R/L-3', 'R/L-4'];
 
 // Объект для хранения состояния пользователя
 interface UserState {
