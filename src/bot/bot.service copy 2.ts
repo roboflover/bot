@@ -127,27 +127,29 @@ private csvFilePath = join(cwd(), 'test_results.csv');
         await this.showUserRecords(chatId);
       } else if (data.startsWith('delete_record')) {
         // Удаляем указанную запись
-        const parts = data.split('_');
-        const index = parseInt(parts[parts.length - 1]);
+        // const index = parseInt(data.split('_')[1]);
+
+        const parts = data.split('_'); // Разделяем строку на массив
+        const index = parseInt(parts[parts.length - 1]); // Берём последний элемент и преобразуем в число
+        console.log('index', index)
         await this.deleteUserRecord(chatId, index);
       } else if (data === 'select_slot') {
         // Когда нажимают "Выбрать слот тренировки"
+        console.log(`Пользователь выбрал команду: ${data}`);
         await this.selectTrainingSlot(query);
-      } else if (data === 'view_registered_users') {
-        // Просмотр списка записавшихся участников
-        await this.showRegisteredUsers(chatId);
       } else if (/^slot_/.test(data)) {
-        // Когда выбирают конкретный слот
+        // Когда выбирают конкретный слот (например, 'slot_09:00')
+        console.log(`Пользователь выбрал слот: ${data}`);
         userState.selectedSlot = data.replace('slot_', '');
-        await this.askForUsername(chatId, userState);
+        await this.askForUsername(chatId, userState); // Новый шаг - запрос имени пользователя
       } else if (/^mode_/.test(data)) {
-        // Когда выбирают режим полёта
+        // Когда выбирают режим полёта (например, 'mode_Режим_1')
+        console.log(`Пользователь выбрал режим полета: ${data}`);
         userState.selectedMode = data.replace('mode_', '').replace(/_/g, ' ');
         await this.bookTraining(query, userState.selectedSlot, userState.selectedUsername, userState.selectedMode);
       } else {
         console.log(`Неизвестная команда: ${data}`);
       }
-
     });
   }
 
@@ -165,12 +167,30 @@ private csvFilePath = join(cwd(), 'test_results.csv');
   private async selectTrainingSlot(query: TelegramBot.CallbackQuery) {
     const { message } = query;
     const chatId = message.chat.id;
-
+  
+    // Чтение всех записей из CSV-файла
+    const allRecords = fs.readFileSync(this.csvFilePath, { encoding: 'utf8' }).split('\n').slice(1); // Пропускаем первую строку (заголовки)
+  
+    // Подсчёт количества участников для каждого слота
+    const slotsParticipantsCount = {}; // Хранилище для подсчёта участников по слотам
+    for (const record of allRecords) {
+      const parts = record.split(',');
+      if (parts.length >= 5) {
+        const slot = parts[4]; // Предполагаем, что слот находится в пятом столбце
+        if (slotsParticipantsCount[slot]) {
+          slotsParticipantsCount[slot]++;
+        } else {
+          slotsParticipantsCount[slot] = 1;
+        }
+      }
+    }
+  
+    // Формирование клавиатуры с количеством участников
     const slotKeyboard = trainingSlots.map(slot => ({
-      text: slot,
-      callback_data: `slot_${slot}` // Сохраняем выбранный слот
+      text: `${slot} (${slotsParticipantsCount[slot] || 0})`, // Если для слота нет участников, показываем 0
+      callback_data: `slot_${slot}`
     }));
-
+  
     const options = { reply_markup: JSON.stringify({ inline_keyboard: [slotKeyboard] }) };
     await this.bot.editMessageText('Выберите слот тренировки:', {
       chat_id: chatId,
@@ -178,7 +198,24 @@ private csvFilePath = join(cwd(), 'test_results.csv');
       ...options,
     });
     console.log(`Предложено выбрать слот тренировки: ID=${chatId}`);
-}
+  }
+//   private async selectTrainingSlot(query: TelegramBot.CallbackQuery) {
+//     const { message } = query;
+//     const chatId = message.chat.id;
+
+//     const slotKeyboard = trainingSlots.map(slot => ({
+//       text: slot,
+//       callback_data: `slot_${slot}` // Сохраняем выбранный слот
+//     }));
+
+//     const options = { reply_markup: JSON.stringify({ inline_keyboard: [slotKeyboard] }) };
+//     await this.bot.editMessageText('Выберите слот тренировки:', {
+//       chat_id: chatId,
+//       message_id: message.message_id,
+//       ...options,
+//     });
+//     console.log(`Предложено выбрать слот тренировки: ID=${chatId}`);
+// }
 
 private async askForUsername(chatId: number, userState: UserState) {
   await this.bot.sendMessage(chatId, 'Пожалуйста, введите ваше имя:');
@@ -285,41 +322,4 @@ private async askForUsername(chatId: number, userState: UserState) {
     await this.bot.sendMessage(chatId, `Запись №${recordIndex} удалена.`);
     console.log(`Запись пользователя удалена: ID=${chatId}, индекс=${recordIndex}`);
   }
-
-  private async showRegisteredUsers(chatId: number) {
-    // Чтение всех записей из CSV-файла
-    const allRecords = fs.readFileSync(this.csvFilePath, { encoding: 'utf8' }).split('\n').slice(1); // Пропускаем первую строку (заголовки)
-  
-    // Подготовка массива для хранения информации о слотах и участниках
-    const registeredUsersBySlot: Record<string, string[]> = {};
-  
-    for (const record of allRecords) {
-      const parts = record.split(',');
-      if (parts.length >= 5) {
-        const slot = parts[4]; // Предполагаем, что слот находится в пятом столбце
-        const username = parts[1]; // Имя пользователя находится во втором столбце
-        if (registeredUsersBySlot[slot]) {
-          registeredUsersBySlot[slot].push(username);
-        } else {
-          registeredUsersBySlot[slot] = [username];
-        }
-      }
-    }
-  
-    // Форматируем сообщение с информацией о слотах и участниках
-    let messageText = 'Список записавшихся участников:\n';
-    for (const slot in registeredUsersBySlot) {
-      messageText += `\n**${slot}:**\n`;
-      for (const username of registeredUsersBySlot[slot]) {
-        messageText += `- ${username}\n`;
-      }
-    }
-  
-    // Отправка сообщения пользователю
-    await this.bot.sendMessage(chatId, messageText, { parse_mode: 'Markdown' });
-    console.log(`Отправлено сообщение с информацией о записавшихся участниках: ID=${chatId}`);
-  }
-
-  
 }
-
