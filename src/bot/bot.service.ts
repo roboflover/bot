@@ -5,8 +5,9 @@ import * as path from 'path'; // Для работы с путями
 import { join } from 'path';
 import { cwd } from 'process';
 
-const trainingSlots = ['12.04 Сб 20:00-22:00', '19.04 Суб 21:00-22.00', '26.04 Сб 20:00-22:00', '03.05 Суб 20:00-22.00'];
+const trainingSlots = ['12.04 Сб 20:15-22:00', '19.04 Суб 20:15-22.00', '26.04 Сб 20:15-22:00', '03.05 Суб 20:15-22.00'];
 const flightModes = ['R/L-1', 'R/L-2', 'R/L-3', 'R/L-4'];
+//const trainingSlots = [['12.04 Сб 20:00-22:00'], ['19.04 Суб 21:00-22.00'], ['26.04 Сб 20:00-22:00'], ['03.05 Суб 20:00-22.00']];
 
 // Объект для хранения состояния пользователя
 interface UserState {
@@ -166,19 +167,22 @@ private csvFilePath = join(cwd(), 'test_results.csv');
     const { message } = query;
     const chatId = message.chat.id;
 
-    const slotKeyboard = trainingSlots.map(slot => ({
-      text: slot,
-      callback_data: `slot_${slot}` // Сохраняем выбранный слот
-    }));
+    const slotKeyboard = trainingSlots.map(slot => [
+        {
+            text: slot,
+            callback_data: `slot_${slot}` // Сохраняем выбранный слот
+        }
+    ]);
 
-    const options = { reply_markup: JSON.stringify({ inline_keyboard: [slotKeyboard] }) };
+    const options = { reply_markup: JSON.stringify({ inline_keyboard: slotKeyboard }) };
     await this.bot.editMessageText('Выберите слот тренировки:', {
-      chat_id: chatId,
-      message_id: message.message_id,
-      ...options,
+        chat_id: chatId,
+        message_id: message.message_id,
+        ...options,
     });
-    console.log(`Предложено выбрать слот тренировки: ID=${chatId}`);
+    console.log(` `);
 }
+
 
 private async askForUsername(chatId: number, userState: UserState) {
   await this.bot.sendMessage(chatId, 'Пожалуйста, введите ваше имя:');
