@@ -159,9 +159,26 @@ private csvFilePath = join(cwd(), 'test_results.csv');
       [{ text: 'Просмотреть список записавшихся', callback_data: 'view_registered_users' }], // Новая кнопка
     ];
     const options = { reply_markup: JSON.stringify({ inline_keyboard: keyboard }) };
-    this.bot.sendMessage(chatId, 'Главное меню:', options);
-    console.log(`Показано главное меню: ID=${chatId}`);
-  }
+    const message = `Тренировка в Купчино!
+
+Для вупов класса 75мм 
+По адресу: Загребский бул., 9, Санкт-Петербург
+
+Акция! Первые 4 занятия 
+стоимость 300р за два часа. 
+
+Запись осуществляется через бот: @gonki_dronov_bot
+
+Если набирается группа 4 человека - гонкам быть,
+
+каждые четыре занятия - соревнование
+
+Нажмите "Выбрать слот", чтобы посмотреть расписание
+`;
+    this.bot.sendMessage(chatId, message, options);
+    // console.log(Показано главное меню: ID=${chatId});
+}
+
 
   private async selectTrainingSlot(query: TelegramBot.CallbackQuery) {
     const { message } = query;
